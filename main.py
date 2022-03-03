@@ -3,6 +3,8 @@ import random
 # Constants
 MIN_NUMBER_OF_PLAYERS = 2
 MAX_NUMBER_OF_PLAYERS = 8
+MIN_NAME_LENGTH = 3
+MAX_NAME_LENGTH = 12
 DICES_TO_ROLL = 3
 dices_faces = {
     "GREEN": ["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3,
@@ -82,12 +84,13 @@ def get_valid_players_name(n_of_players: int) -> list:
         while True:
             if name in players:
                 print(f"{name} is already in the game! Try another one.")
-                name = input(f"Zombie {readable_index}: ").strip()
-            elif len(name) < 3:
-                print("Name too short! Try again.")
-                name = input(f"Zombie {readable_index}: ").strip()
+            elif len(name) < MIN_NAME_LENGTH:
+                print(f"Name too short! It must be at least {MIN_NAME_LENGTH} characters long.")
+            elif len(name) > MAX_NAME_LENGTH:
+                print(f"Name too long! It must be at most {MAX_NAME_LENGTH} characters long.")
             else:
                 break
+            name = input(f"Zombie {readable_index}: ").strip()
 
         if name == "":
             name = f"Zombie {readable_index}"
