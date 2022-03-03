@@ -4,7 +4,9 @@ import random
 MIN_NUMBER_OF_PLAYERS = 2
 MAX_NUMBER_OF_PLAYERS = 8
 MIN_NAME_LENGTH = 3
-MAX_NAME_LENGTH = 12
+MAX_NAME_LENGTH = 13
+MAX_SCORE = 13
+INITIAL_AMOUNT_OF_DICES = 13
 DICES_TO_ROLL = 3
 dices_faces = {
     "GREEN": ["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3,
@@ -32,8 +34,11 @@ def main():
     n_of_players = get_valid_number_of_players()
     players = get_valid_players_name(n_of_players)
     introduce_players(players)
+
+    print(dices_box)
     dices = pick_dices(DICES_TO_ROLL)
     rolls = roll_dices(dices)
+    print(dices_box)
 
     print(players)
     print(dices)
@@ -98,7 +103,7 @@ def get_valid_players_name(n_of_players: int) -> list:
     return players
 
 
-def introduce_players(players: list):
+def introduce_players(players: list) -> None:
     # list to string with comma delimiter
     players_string = colors["RED"] + ", ".join(players[:-1]) + f" and {players[-1]}" + colors["END"]
     print(f"🧟 Grrr!!! Have fun {players_string}")
@@ -107,13 +112,28 @@ def introduce_players(players: list):
 def pick_dices(n_of_dices: int) -> list:
     total_dices = len(dices_box)
     if n_of_dices > total_dices:
-        print("Not enough dices")
+        raise ValueError("Unavailable amount of dices!")
     picked_dices = random.sample(dices_box, n_of_dices)
+    for dice in picked_dices:
+        dices_box.remove(dice)
     return picked_dices
+
+
+def return_dices(dices: list) -> None:
+    dices_box.extend(dices)
+    assert len(dices_box) > INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
 
 
 def roll_dices(dices: list) -> list:
     return [random.choice(dices_faces[dice]) for dice in dices]
+
+
+def game_round(players):
+    pass
+
+
+def player_turn(player: str) -> None:
+    pass
 
 
 if __name__ == "__main__":
@@ -122,6 +142,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nBye!")
         exit(0)
-    except:
-        print("\nSomething went wrong")
+    except Exception as e:
+        print(f"\nSomething went wrong. Error: {e}")
         exit(0)
