@@ -29,11 +29,27 @@ colors = {
 dices_box = ["GREEN"] * 6 + ["YELLOW"] * 4 + ["RED"] * 3
 
 
+class Player:
+    def __init__(self, name: str):
+        self.name = name
+        self.score = 0
+
+    def add_score(self, score: int) -> None:
+        self.score += score
+
+    def reset_score(self) -> None:
+        self.score = 0
+
+    def __str__(self):
+        return f"{self.name} has eaten {self.score} brains!"
+
+
 def main():
     introduce_game()
     n_of_players = get_valid_number_of_players()
-    players = get_valid_players_name(n_of_players)
-    introduce_players(players)
+    players_name = get_valid_players_name(n_of_players)
+    players = [Player(name) for name in players_name]
+    introduce_players(players_name)
 
     print(dices_box)
     dices = pick_dices(DICES_TO_ROLL)
@@ -126,14 +142,6 @@ def return_dices(dices: list) -> None:
 
 def roll_dices(dices: list) -> list:
     return [random.choice(dices_faces[dice]) for dice in dices]
-
-
-def game_round(players):
-    pass
-
-
-def player_turn(player: str) -> None:
-    pass
 
 
 if __name__ == "__main__":
