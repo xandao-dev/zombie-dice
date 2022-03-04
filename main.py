@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 # Constants
 MIN_NUMBER_OF_PLAYERS = 2
@@ -8,12 +9,12 @@ MAX_NAME_LENGTH = 13
 MAX_SCORE = 13
 INITIAL_AMOUNT_OF_DICES = 13
 DICES_TO_ROLL = 3
-dices_faces = {
-    "GREEN": ["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3,
-    "YELLOW": ["shotgun"] * 2 + ["runner"] * 2 + ["brain"] * 2,
-    "RED": ["shotgun"] * 3 + ["runner"] * 2 + ["brain"] * 1,
+DICES_FACES = {
+    "green": ["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3,
+    "yellow": ["shotgun"] * 2 + ["runner"] * 2 + ["brain"] * 2,
+    "red": ["shotgun"] * 3 + ["runner"] * 2 + ["brain"] * 1,
 }
-colors = {
+COLORS = {
     # ANSI Escape Sequences
     "GREEN": "\033[92m",
     "YELLOW": "\033[93m",
@@ -25,8 +26,23 @@ colors = {
     "END": "\033[0m",
 }
 
-# Variables
-dices_box = ["GREEN"] * 6 + ["YELLOW"] * 4 + ["RED"] * 3
+
+class Dice:
+    def __init__(self, color: str):
+        self.color = color
+        self.face = ""
+
+    def roll(self):
+        self.face = random.choice(DICES_FACES[self.color])
+
+    def reset(self):
+        self.face = ""
+
+    def __str__(self):
+        return self.face
+
+    def __repr__(self):
+        return f"Dice('{self.color}', '{self.face}')"
 
 
 class Player:
@@ -42,6 +58,13 @@ class Player:
 
     def __str__(self):
         return f"{self.name} has eaten {self.score} brains!"
+
+    def __repr__(self):
+        return f"Player('{self.name}', {self.score})"
+
+
+# Variables
+dices_box = [Dice("green")] * 6 + [Dice("yellow")] * 4 + [Dice("red")] * 3
 
 
 def main():
@@ -62,12 +85,12 @@ def main():
 
 
 def introduce_game() -> None:
-    boldAndUnderline = colors["BOLD"] + colors["UNDERLINE"]
+    boldAndUnderline = COLORS["BOLD"] + COLORS["UNDERLINE"]
     print(
         f"""
 {boldAndUnderline}
-Welcome to 🧟 {colors["GREEN"]}Zombie{colors["END"]}{boldAndUnderline} 🎲 Dice!
-{colors["END"]}
+Welcome to 🧟 {COLORS["GREEN"]}Zombie{COLORS["END"]}{boldAndUnderline} 🎲 Dice!
+{COLORS["END"]}
 """
     )
 
@@ -119,9 +142,8 @@ def get_valid_players_name(n_of_players: int) -> list:
     return players
 
 
-def introduce_players(players: list) -> None:
-    # list to string with comma delimiter
-    players_string = colors["RED"] + ", ".join(players[:-1]) + f" and {players[-1]}" + colors["END"]
+def introduce_players(players_name: List[str]) -> None:
+    players_string = COLORS["RED"] + ", ".join(players_name[:-1]) + f" and {players_name[-1]}" + COLORS["END"]
     print(f"🧟 Grrr!!! Have fun {players_string}")
 
 
@@ -138,10 +160,6 @@ def pick_dices(n_of_dices: int) -> list:
 def return_dices(dices: list) -> None:
     dices_box.extend(dices)
     assert len(dices_box) > INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
-
-
-def roll_dices(dices: list) -> list:
-    return [random.choice(dices_faces[dice]) for dice in dices]
 
 
 if __name__ == "__main__":
