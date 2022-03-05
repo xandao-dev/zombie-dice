@@ -11,9 +11,9 @@ MAX_SHOOTERS_PER_TURN = 3
 INITIAL_AMOUNT_OF_DICES = 13
 N_OF_DICES_TO_ROLL = 3
 DICES_FACES = {
-    "green": ["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3,
-    "yellow": ["shotgun"] * 2 + ["runner"] * 2 + ["brain"] * 2,
-    "red": ["shotgun"] * 3 + ["runner"] * 2 + ["brain"] * 1,
+    "green": tuple(["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3),
+    "yellow": tuple(["shotgun"] * 2 + ["runner"] * 2 + ["brain"] * 2),
+    "red": tuple(["shotgun"] * 3 + ["runner"] * 2 + ["brain"] * 1),
 }
 COLORS = {
     # ANSI Escape Sequences
@@ -217,23 +217,30 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
 
     # Compute runners of the player to roll again
     for dice in player.dices:
-        if dice.face != "runner" or len(runners_to_roll_again) <= N_OF_DICES_TO_ROLL:
+        if dice.face != "runner" or len(runners_to_roll_again) >= N_OF_DICES_TO_ROLL:
             continue
-        print("We have some runners, rolling them again!")
         runners_to_roll_again.append(dice)
         player.dices.remove(dice)
+
     n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(runners_to_roll_again)
 
     # Pick dices to roll again, considering the number of runners
     try:
         dices = pick_dices(n_of_dices_to_pick)
     except ValueError:
-        # FIXME: When we run out of dices in the box
-        print("Dices over, returning brains to the box and storing score in a temporary variable")
-        # for dice in picked_dices:
-        #    if dice.face == "brain":
-        #        picked_dices.remove(dice)
-        #        return_dices([dice])
+        brains_to_return = []
+        for dice in player.dices:
+            if dice.face == "brain":
+                brains_to_return.append(dice)
+                player.dices.remove(dice)
+
+        if len(brains_to_return) > 0:
+            print(
+                f"↪️ The cup is empty, returning your brains to the cup and saving your score {COLORS['BOLD']}temporarily{COLORS['END']}."
+            )
+            return_dices(brains_to_return)
+        else:
+            print(f"↪️ The cup is empty, but you don't have any brains to return. You lose your turn.")
 
     # Show picked dices
     print(f"🤌🎲 Picked {len(dices)} dices: ", end="")
