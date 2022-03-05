@@ -74,7 +74,7 @@ class Player:
 
 
 # Variables
-dices_box = [Dice("green")] * 6 + [Dice("yellow")] * 4 + [Dice("red")] * 3
+dices_box = [Dice("green") for _ in range(6)] + [Dice("yellow") for _ in range(4)] + [Dice("red") for _ in range(3)]
 
 
 def main():
@@ -221,7 +221,7 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
             continue
         runners_to_roll_again.append(dice)
         player.dices.remove(dice)
-
+    print(runners_to_roll_again)
     n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(runners_to_roll_again)
 
     # Pick dices to roll again, considering the number of runners
