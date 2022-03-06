@@ -11,9 +11,9 @@ MAX_SHOOTERS_PER_TURN = 3
 INITIAL_AMOUNT_OF_DICES = 13
 N_OF_DICES_TO_ROLL = 3
 DICES_FACES = {
-    "green": tuple(["shotgun"] * 1 + ["runner"] * 2 + ["brain"] * 3),
-    "yellow": tuple(["shotgun"] * 2 + ["runner"] * 2 + ["brain"] * 2),
-    "red": tuple(["shotgun"] * 3 + ["runner"] * 2 + ["brain"] * 1),
+    "green": tuple(["shotgun"] * 1 + ["footprint"] * 2 + ["brain"] * 3),
+    "yellow": tuple(["shotgun"] * 2 + ["footprint"] * 2 + ["brain"] * 2),
+    "red": tuple(["shotgun"] * 3 + ["footprint"] * 2 + ["brain"] * 1),
 }
 COLORS = {
     # ANSI Escape Sequences
@@ -178,7 +178,7 @@ def game_round(players: List[Player]):
 def player_turn(player: Player) -> None:
     brains = 0
     shooters = 0
-    runners = 0
+    footprints = 0
 
     print("═" * 100)
     print(f"{COLORS['BOLD']}It's your turn {player}{COLORS['END']} 🧟")
@@ -191,12 +191,12 @@ def player_turn(player: Player) -> None:
                 break
 
         if action == ACTIONS["roll"]:
-            result = roll_action(player, brains, shooters, runners)
+            result = roll_action(player, brains, shooters, footprints)
             if not result["success"]:
                 finish_action(player, 0)
             brains += result["brains"]
             shooters += result["shooters"]
-            runners += result["runners"]
+            footprints += result["footprints"]
         elif action == ACTIONS["finish"]:
             finish_action(player, brains)
             break
@@ -211,20 +211,20 @@ def get_valid_action(key: str, valid_actions: list) -> Optional[dict]:
     return None
 
 
-def roll_action(player: Player, brains: int, shooters: int, runners: int) -> None:
-    runners_to_roll_again = []
+def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> None:
+    footprints_to_roll_again = []
     dices = []
 
-    # Compute runners of the player to roll again
+    # Compute footprints of the player to roll again
     for dice in player.dices:
-        if dice.face != "runner" or len(runners_to_roll_again) >= N_OF_DICES_TO_ROLL:
+        if dice.face != "footprint" or len(footprints_to_roll_again) >= N_OF_DICES_TO_ROLL:
             continue
-        runners_to_roll_again.append(dice)
+        footprints_to_roll_again.append(dice)
         player.dices.remove(dice)
-    print(runners_to_roll_again)
-    n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(runners_to_roll_again)
+    print(footprints_to_roll_again)
+    n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(footprints_to_roll_again)
 
-    # Pick dices to roll again, considering the number of runners
+    # Pick dices to roll again, considering the number of footprints
     try:
         dices = pick_dices(n_of_dices_to_pick)
     except ValueError:
@@ -243,7 +243,7 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
             print(f"↪️ The cup is empty, but you don't have any brains to return. You lose your turn.")
 
     # Show picked dices
-    print(f"🤌🎲 Picked {len(dices)} dices: ", end="")
+    print(f"🤌 🎲 Picked {len(dices)} dices: ", end="")
     for dice in dices:
         if dice.color == "red":
             print(f"{COLORS['RED']}{dice.color} dice{COLORS['END']}; ", end="")
@@ -253,10 +253,10 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
             print(f"{COLORS['GREEN']}{dice.color} dice{COLORS['END']}; ", end="")
     print("")
 
-    # Show runners to roll again
-    if len(runners_to_roll_again) > 0:
-        print(f"🏃 You have {len(runners_to_roll_again)} runners to roll again: ", end="")
-        for dice in runners_to_roll_again:
+    # Show footprints to roll again
+    if len(footprints_to_roll_again) > 0:
+        print(f"👣 You have {len(footprints_to_roll_again)} footprints to roll again: ", end="")
+        for dice in footprints_to_roll_again:
             if dice.color == "red":
                 print(f"{COLORS['RED']}{dice.color} dice{COLORS['END']}; ", end="")
             elif dice.color == "yellow":
@@ -266,7 +266,7 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
         print("")
 
     # Extend the picked dices to the dices that will be rolled again
-    dices.extend(runners_to_roll_again)
+    dices.extend(footprints_to_roll_again)
     # Add dices to the player's hand
     player.dices.extend(dices)
 
@@ -275,13 +275,13 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
         dice.roll()
         if dice.face == "brain":
             brains += 1
-        elif dice.face == "shooter":
+        elif dice.face == "shotgun":
             shooters += 1
-        elif dice.face == "runner":
-            runners += 1
+        elif dice.face == "footprint":
+            footprints += 1
 
     # Show the rolled dices
-    print(f"✊🎲 You rolled: ", end="")
+    print(f"✊ 🎲 You rolled: ", end="")
     for dice in dices:
         if dice.color == "red":
             print(
@@ -306,7 +306,7 @@ def roll_action(player: Player, brains: int, shooters: int, runners: int) -> Non
         return {"success": False}
 
     print(f"Your current score is {brains + player.score}")
-    return {"success": True, "brains": brains, "shooters": shooters, "runners": runners}
+    return {"success": True, "brains": brains, "shooters": shooters, "footprints": footprints}
 
 
 def finish_action(player: Player, add_score: int) -> None:
