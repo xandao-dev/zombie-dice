@@ -58,14 +58,14 @@ class Dice:
     def roll(self):
         self.face = random.choice(DICES_FACES[self.color])
 
-    def reset(self):
-        self.face = ""
-
     def __str__(self):
         return self.face
 
     def __repr__(self):
         return f"Dice('{self.color}', '{self.face}')"
+
+
+dices_box = [Dice("green") for _ in range(6)] + [Dice("yellow") for _ in range(4)] + [Dice("red") for _ in range(3)]
 
 
 class Player:
@@ -74,9 +74,19 @@ class Player:
         self.score = 0
         self.dices = []
 
-    def reset(self):
-        self.score = 0
-        return_dices(self.dices)
+    def return_dices(self, dices: Optional[List[Dice]] = None) -> None:
+        if dices is None:
+            dices_box.extend(self.dices)
+            self.dices = []
+        else:
+            # Check if dices are from the player
+            for dice in dices:
+                if dice not in self.dices:
+                    raise ValueError("Dices are not from the player")
+            dices_box.extend(dices)
+            self.dices = [dice for dice in self.dices if dice not in dices]
+
+        assert len(dices_box) <= INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
 
     def __str__(self):
         return self.name
@@ -85,17 +95,13 @@ class Player:
         return f"Player('{self.name}', {self.score})"
 
 
-# Variables
-dices_box = [Dice("green") for _ in range(6)] + [Dice("yellow") for _ in range(4)] + [Dice("red") for _ in range(3)]
-
-
 def main():
     introduce_game()
     n_of_players = get_valid_number_of_players()
     players_name = get_valid_players_name(n_of_players)
     players = [Player(name) for name in players_name]
     introduce_players(players_name)
-    player_turn(players[0])
+    start_game(players)
 
 
 def introduce_game() -> None:
@@ -164,11 +170,37 @@ def introduce_players(players_name: List[str]) -> None:
 def start_game(players: List[Player]):
     # if someone reaches 13 points, the game ends and show the score
     # if a tie happens, this two players will play against each other 1 round
-    print("The game has started!")
+    print("Let's start the game!")
+    while True:
+        game_round(players)
+        players_with_max_score = [player for player in players if player.score >= MAX_SCORE]
+        if len(players_with_max_score) == 1:
+            print(f"🧟🏆 {players_with_max_score[0].name} wins the game! 🎉 🎉 🎉")
+            break
+        elif len(players_with_max_score) > 1:
+            print(
+                "🤔A tie happened! Running a game between tie-players"
+                + COLORS["RED"]
+                + ", ".join(players_with_max_score[:-1])
+                + f" and {players_with_max_score[-1]}"
+                + COLORS["END"]
+            )
+            tiebreaker_round(players_with_max_score)
+            print("Scoreboard:", end="")
+            for i, player in enumerate(players_with_max_score):
+                print(f"🏆{i}: {player.name} scored {player.score} points", end="")
+            print()
+        else:
+            print(f"No one has reached {MAX_SCORE} points yet! Next round!")
 
 
 def game_round(players: List[Player]):
     for player in players:
+        player_turn(player)
+
+
+def tiebreaker_round(tied_players: List[Player]):
+    for player in tied_players:
         player_turn(player)
 
 
@@ -207,13 +239,14 @@ def player_turn(player: Player) -> None:
 
             # Stop if the player got 3 shotguns
             if shotguns >= MAX_SHOOTERS_PER_TURN:
-                print("☠️  Busted, you got to many shotguns. The score of this turn is lost. ☠️")
+                print("☠️  Busted, you got too many shotguns. The score of this turn is lost. ☠️")
                 finish_action(player, 0)
                 break
         elif action == ACTIONS["finish"]:
             finish_action(player, brains)
             break
         print("─" * 100)
+    player.return_dices()
 
 
 def get_valid_action(key: str, valid_actions: list) -> Optional[dict]:
@@ -244,11 +277,9 @@ def roll_action(player: Player) -> None:
         print("↪️  The cup is empty!")
         brains_to_return = []
         brains_to_return = [dice for dice in player.dices if dice.face == "brain"]
-        player.dices = [dice for dice in player.dices if dice not in brains_to_return]
-
         if len(brains_to_return) > 0:
             print(f"🤤 Returning your brains to the cup, you will not lose any points.")
-            return_dices(brains_to_return)
+            player.return_dices(brains_to_return)
             dices = pick_dices(n_of_dices_to_pick)
         else:
             print(f"⏭️ Out of dices in the box, turn is over. Your score will be saved.")
@@ -323,11 +354,6 @@ def pick_dices(n_of_dices: int) -> List[Dice]:
     for dice in picked_dices:
         dices_box.remove(dice)
     return picked_dices
-
-
-def return_dices(dices: List[Dice]) -> None:
-    dices_box.extend(dices)
-    assert len(dices_box) <= INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
 
 
 def finish_action(player: Player, add_score: int) -> None:
