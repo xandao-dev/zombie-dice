@@ -177,7 +177,7 @@ def game_round(players: List[Player]):
 
 def player_turn(player: Player) -> None:
     brains = 0
-    shooters = 0
+    shotguns = 0
     footprints = 0
 
     print("═" * 100)
@@ -191,11 +191,12 @@ def player_turn(player: Player) -> None:
                 break
 
         if action == ACTIONS["roll"]:
-            result = roll_action(player, brains, shooters, footprints)
+            result = roll_action(player, brains, shotguns, footprints)
             if not result["success"]:
                 finish_action(player, 0)
+                break
             brains += result["brains"]
-            shooters += result["shooters"]
+            shotguns += result["shotguns"]
             footprints += result["footprints"]
         elif action == ACTIONS["finish"]:
             finish_action(player, brains)
@@ -211,16 +212,15 @@ def get_valid_action(key: str, valid_actions: list) -> Optional[dict]:
     return None
 
 
-def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> None:
+def roll_action(player: Player, brains: int, shotguns: int, footprints: int) -> None:
     footprints_to_roll_again = []
     dices = []
 
     # Compute footprints of the player to roll again
-    for dice in player.dices:
-        if dice.face != "footprint" or len(footprints_to_roll_again) >= N_OF_DICES_TO_ROLL:
-            continue
-        footprints_to_roll_again.append(dice)
-        player.dices.remove(dice)
+    footprint_match = lambda dice: dice.face == "footprint" and len(footprints_to_roll_again) >= N_OF_DICES_TO_ROLL
+    footprints_to_roll_again = [dice for dice in player.dices if footprint_match(dice)]
+    player.dices = [dice for dice in player.dices if dice not in footprints_to_roll_again]
+
     print(footprints_to_roll_again)
     n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(footprints_to_roll_again)
 
@@ -229,10 +229,8 @@ def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> 
         dices = pick_dices(n_of_dices_to_pick)
     except ValueError:
         brains_to_return = []
-        for dice in player.dices:
-            if dice.face == "brain":
-                brains_to_return.append(dice)
-                player.dices.remove(dice)
+        brains_to_return = [dice for dice in player.dices if dice.face == "brain"]
+        player.dices = [dice for dice in player.dices if dice not in brains_to_return]
 
         if len(brains_to_return) > 0:
             print(
@@ -267,8 +265,6 @@ def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> 
 
     # Extend the picked dices to the dices that will be rolled again
     dices.extend(footprints_to_roll_again)
-    # Add dices to the player's hand
-    player.dices.extend(dices)
 
     # Roll the dices and compute the points
     for dice in dices:
@@ -276,7 +272,7 @@ def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> 
         if dice.face == "brain":
             brains += 1
         elif dice.face == "shotgun":
-            shooters += 1
+            shotguns += 1
         elif dice.face == "footprint":
             footprints += 1
 
@@ -300,13 +296,16 @@ def roll_action(player: Player, brains: int, shooters: int, footprints: int) -> 
             )
     print("")
 
-    # Stop if the player got 3 shooters
-    if shooters >= MAX_SHOOTERS_PER_TURN:
-        print("Busted, you got to many shooters")
+    # Add dices to the player's hand
+    player.dices.extend(dices)
+
+    # Stop if the player got 3 shotguns
+    if shotguns >= MAX_SHOOTERS_PER_TURN:
+        print("Busted, you got to many shotguns")
         return {"success": False}
 
     print(f"Your current score is {brains + player.score}")
-    return {"success": True, "brains": brains, "shooters": shooters, "footprints": footprints}
+    return {"success": True, "brains": brains, "shotguns": shotguns, "footprints": footprints}
 
 
 def finish_action(player: Player, add_score: int) -> None:
