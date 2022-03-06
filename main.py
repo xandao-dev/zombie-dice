@@ -2,8 +2,8 @@ import random
 from typing import List, Optional
 
 # Constants
-MIN_NUMBER_OF_PLAYERS = 2
-MAX_NUMBER_OF_PLAYERS = 8
+MIN_PLAYERS = 2
+MAX_PLAYERS = 8
 MIN_NAME_LENGTH = 3
 MAX_NAME_LENGTH = 13
 MAX_SCORE = 13
@@ -101,16 +101,16 @@ def get_valid_number_of_players() -> int:
     while True:
         try:
             try:
-                n_of_players = int(input("How many 🧟 zombies will play (2-8)? "))
+                n_of_players = int(input(f"How many 🧟 zombies will play ({MIN_PLAYERS}-{MAX_PLAYERS})? "))
             except ValueError:
                 print("You must enter a number of players!")
                 raise ValueError("Not a valid number of players")
 
-            if n_of_players < MIN_NUMBER_OF_PLAYERS:
-                print(f"You need at least {MIN_NUMBER_OF_PLAYERS} zombies!")
+            if n_of_players < MIN_PLAYERS:
+                print(f"You need at least {MIN_PLAYERS} zombies!")
                 raise ValueError("Too few players")
-            if n_of_players > MAX_NUMBER_OF_PLAYERS:
-                print(f"You can play at most {MAX_NUMBER_OF_PLAYERS} zombies!")
+            if n_of_players > MAX_PLAYERS:
+                print(f"You can play at most {MAX_PLAYERS} zombies!")
                 raise ValueError("Too many players")
         except ValueError:
             continue
@@ -149,21 +149,6 @@ def introduce_players(players_name: List[str]) -> None:
     print(f"🧟 Grrr!!! Have fun {players_string}")
 
 
-def pick_dices(n_of_dices: int) -> List[Dice]:
-    total_dices = len(dices_box)
-    if n_of_dices > total_dices:
-        raise ValueError("Unavailable amount of dices!")
-    picked_dices = random.sample(dices_box, n_of_dices)
-    for dice in picked_dices:
-        dices_box.remove(dice)
-    return picked_dices
-
-
-def return_dices(dices: List[Dice]) -> None:
-    dices_box.extend(dices)
-    assert len(dices_box) > INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
-
-
 def start_game(players: List[Player]):
     # if someone reaches 13 points, the game ends and show the score
     # if a tie happens, this two players will play against each other 1 round
@@ -191,13 +176,28 @@ def player_turn(player: Player) -> None:
                 break
 
         if action == ACTIONS["roll"]:
-            result = roll_action(player, brains, shotguns, footprints)
-            if not result["success"]:
-                finish_action(player, 0)
-                break
+            result = roll_action(player)
             brains += result["brains"]
             shotguns += result["shotguns"]
             footprints += result["footprints"]
+
+            print(f"ℹ️  {player}, you have {brains} points and {shotguns} shotguns in this round.")
+
+            # Any condition that ends the turn, but conservers the player's score
+            if result["finish"]:
+                finish_action(player, brains)
+                break
+
+            # If player reaches the max score, the game ends
+            if brains + player.score >= MAX_SCORE:
+                finish_action(player, brains)
+                break
+
+            # Stop if the player got 3 shotguns
+            if shotguns >= MAX_SHOOTERS_PER_TURN:
+                print("☠️  Busted, you got to many shotguns. The score of this turn is lost. ☠️")
+                finish_action(player, 0)
+                break
         elif action == ACTIONS["finish"]:
             finish_action(player, brains)
             break
@@ -208,37 +208,39 @@ def get_valid_action(key: str, valid_actions: list) -> Optional[dict]:
     for action in valid_actions:
         if key == action["key"]:
             return action
-    print(f"Invalid action! Available actions: {', '.join(action['description'] for action in valid_actions)}")
+    print(f"❌ Invalid action! Available actions: {', '.join(action['description'] for action in valid_actions)}")
     return None
 
 
-def roll_action(player: Player, brains: int, shotguns: int, footprints: int) -> None:
+def roll_action(player: Player) -> None:
     footprints_to_roll_again = []
     dices = []
+    brains = 0
+    shotguns = 0
+    footprints = 0
 
     # Compute footprints of the player to roll again
-    footprint_match = lambda dice: dice.face == "footprint" and len(footprints_to_roll_again) >= N_OF_DICES_TO_ROLL
+    footprint_match = lambda dice: dice.face == "footprint" and len(footprints_to_roll_again) <= N_OF_DICES_TO_ROLL
     footprints_to_roll_again = [dice for dice in player.dices if footprint_match(dice)]
     player.dices = [dice for dice in player.dices if dice not in footprints_to_roll_again]
 
-    print(footprints_to_roll_again)
-    n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(footprints_to_roll_again)
-
     # Pick dices to roll again, considering the number of footprints
+    n_of_dices_to_pick = N_OF_DICES_TO_ROLL - len(footprints_to_roll_again)
     try:
         dices = pick_dices(n_of_dices_to_pick)
     except ValueError:
+        print("↪️  The cup is empty!")
         brains_to_return = []
         brains_to_return = [dice for dice in player.dices if dice.face == "brain"]
         player.dices = [dice for dice in player.dices if dice not in brains_to_return]
 
         if len(brains_to_return) > 0:
-            print(
-                f"↪️ The cup is empty, returning your brains to the cup and saving your score {COLORS['BOLD']}temporarily{COLORS['END']}."
-            )
+            print(f"🤤 Returning your brains to the cup, you will not lose any points.")
             return_dices(brains_to_return)
+            dices = pick_dices(n_of_dices_to_pick)
         else:
-            print(f"↪️ The cup is empty, but you don't have any brains to return. You lose your turn.")
+            print(f"⏭️ Out of dices in the box, turn is over. Your score will be saved.")
+            return {"finish": True, "brains": 0, "shotguns": 0, "footprints": 0}
 
     # Show picked dices
     print(f"🤌 🎲 Picked {len(dices)} dices: ", end="")
@@ -277,7 +279,7 @@ def roll_action(player: Player, brains: int, shotguns: int, footprints: int) -> 
             footprints += 1
 
     # Show the rolled dices
-    print(f"✊ 🎲 You rolled: ", end="")
+    print(f"✊🎲 You rolled: ", end="")
     for dice in dices:
         if dice.color == "red":
             print(
@@ -298,19 +300,27 @@ def roll_action(player: Player, brains: int, shotguns: int, footprints: int) -> 
 
     # Add dices to the player's hand
     player.dices.extend(dices)
+    return {"finish": False, "brains": brains, "shotguns": shotguns, "footprints": footprints}
 
-    # Stop if the player got 3 shotguns
-    if shotguns >= MAX_SHOOTERS_PER_TURN:
-        print("Busted, you got to many shotguns")
-        return {"success": False}
 
-    print(f"Your current score is {brains + player.score}")
-    return {"success": True, "brains": brains, "shotguns": shotguns, "footprints": footprints}
+def pick_dices(n_of_dices: int) -> List[Dice]:
+    total_dices = len(dices_box)
+    if n_of_dices > total_dices:
+        raise ValueError("Unavailable amount of dices!")
+    picked_dices = random.sample(dices_box, n_of_dices)
+    for dice in picked_dices:
+        dices_box.remove(dice)
+    return picked_dices
+
+
+def return_dices(dices: List[Dice]) -> None:
+    dices_box.extend(dices)
+    assert len(dices_box) <= INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
 
 
 def finish_action(player: Player, add_score: int) -> None:
-    print(f"{player} you have {add_score + player.score} points!")
     player.score += add_score
+    print(f"{player} you have {player.score} points!")
 
 
 if __name__ == "__main__":
