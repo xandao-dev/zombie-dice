@@ -3,6 +3,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,pycharm,jupyternotebooks,virtualenv,windows,linux,macos
 
 ### JupyterNotebooks ###
+
+experiments.ipynb
+
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
 
