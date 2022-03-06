@@ -3,7 +3,7 @@ from typing import List, Optional
 
 # Constants
 MIN_PLAYERS = 2
-MAX_PLAYERS = 8
+MAX_PLAYERS = 99
 MIN_NAME_LENGTH = 3
 MAX_NAME_LENGTH = 13
 MAX_SCORE = 13
@@ -130,7 +130,7 @@ def get_valid_players_name(n_of_players: int) -> list:
         while True:
             if name in players:
                 print(f"{name} is already in the game! Try another one.")
-            elif len(name) < MIN_NAME_LENGTH:
+            elif len(name) < MIN_NAME_LENGTH and len(name) != 0:
                 print(f"Name too short! It must be at least {MIN_NAME_LENGTH} characters long.")
             elif len(name) > MAX_NAME_LENGTH:
                 print(f"Name too long! It must be at most {MAX_NAME_LENGTH} characters long.")
