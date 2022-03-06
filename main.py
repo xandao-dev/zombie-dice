@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""Zombie Dice - Eat brains. Don't get shotgunned"""
+
+__version__ = "1.0.0-dev"
+__status__ = "Development"
+__author__ = "Alexandre Calil Martins Fonseca"
+__email__ = "alexandrecalilmf@gmail.com"
+__credits__ = "Steve Jackson Games"
+__license__ = "MIT"
+
 import random
 from typing import List, Optional
 
