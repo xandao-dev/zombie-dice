@@ -88,6 +88,9 @@ class Player:
 
         assert len(dices_box) <= INITIAL_AMOUNT_OF_DICES, "More dices than existing amount!"
 
+    def reset_score(self):
+        self.score = 0
+
     def __str__(self):
         return self.name
 
@@ -175,21 +178,28 @@ def start_game(players: List[Player]):
         game_round(players)
         players_with_max_score = [player for player in players if player.score >= MAX_SCORE]
         if len(players_with_max_score) == 1:
-            print(f"🧟🏆 {players_with_max_score[0].name} wins the game! 🎉 🎉 🎉")
+            players_with_max_score.sort(key=lambda player: player.score, reverse=True)
+            print(f"\n🧟🏆 {players_with_max_score[0].name} wins the game! 🎉 🎉 🎉\n")
+            print("Scoreboard:")
+            for i, player in enumerate(players_with_max_score):
+                print(f"    🏆 {i + 1}: {player.name} scored {player.score} points")
             break
         elif len(players_with_max_score) > 1:
             print(
-                "🤔A tie happened! Running a game between tie-players"
+                "🤔 A tie happened! Running a game between tie-players "
                 + COLORS["RED"]
-                + ", ".join(players_with_max_score[:-1])
+                + ", ".join([str(name) for name in players_with_max_score[:-1]])
                 + f" and {players_with_max_score[-1]}"
                 + COLORS["END"]
             )
+            for player in players_with_max_score:
+                player.reset_score()
             tiebreaker_round(players_with_max_score)
-            print("Scoreboard:", end="")
+            players_with_max_score.sort(key=lambda player: player.score, reverse=True)
+            print("Scoreboard:")
             for i, player in enumerate(players_with_max_score):
-                print(f"🏆{i}: {player.name} scored {player.score} points", end="")
-            print()
+                print(f"    🏆 {i + 1}: {player.name} scored {player.score} points")
+            break
         else:
             print(f"No one has reached {MAX_SCORE} points yet! Next round!")
 
@@ -232,15 +242,15 @@ def player_turn(player: Player) -> None:
                 finish_action(player, brains)
                 break
 
-            # If player reaches the max score, the game ends
-            if brains + player.score >= MAX_SCORE:
-                finish_action(player, brains)
-                break
-
             # Stop if the player got 3 shotguns
             if shotguns >= MAX_SHOOTERS_PER_TURN:
                 print("☠️  Busted, you got too many shotguns. The score of this turn is lost. ☠️")
                 finish_action(player, 0)
+                break
+
+            # If player reaches the max score, the game ends
+            if brains + player.score >= MAX_SCORE:
+                finish_action(player, brains)
                 break
         elif action == ACTIONS["finish"]:
             finish_action(player, brains)
@@ -366,7 +376,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nBye!")
-        exit(0)
-    except Exception as e:
-        print(f"\nSomething went wrong. Error: {e}")
         exit(0)
