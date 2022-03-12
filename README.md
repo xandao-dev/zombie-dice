@@ -51,7 +51,7 @@
 * Strictly follow the rules of the game, respecting all probabilities
 * Terminal-based game
 * Has input validation in all interactions
-* Accept from 2 to 99 players
+* Accept from 2 to 13 players
 * Players names can have a min of 3 chars and max of 13 chars, empty name will generate a generic name
 
 ### Built With
