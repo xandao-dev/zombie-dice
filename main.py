@@ -6,7 +6,7 @@
 __version__ = "1.0.0-dev"
 __status__ = "Development"
 __author__ = "Alexandre Calil Martins Fonseca"
-__email__ = "alexandrecalilmf@gmail.com"
+__email__ = "alexandre@xandao.dev"
 __credits__ = "Steve Jackson Games"
 __license__ = "MIT"
 
